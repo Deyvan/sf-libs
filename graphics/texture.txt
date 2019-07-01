@@ -1,0 +1,52 @@
+local textures = {}
+local mt = {}
+mt.__index = mt
+
+mt.__call = function(self, url, scaled, centered)
+    
+    local url = url or ""
+    local name = url .. (scaled and "scaled" or "") .. (centered and "centered" or "")
+    local obj = {}
+    local texture
+    
+    obj.loaded_ = false
+    obj.texture = name 
+    
+    if url != "" and not textures[name] then
+        
+        textures[name] = render.getTextureID(url, function(_, _, w, h, layout)
+            
+            local max, scale
+            local x, y = 0, 0
+            
+            if scaled then
+                max = math.max(w, h)
+                scale = (1024 - max) / max
+                w = w + w * scale
+                h = h + h * scale
+            end
+            
+            if centered then
+                x = (1024 - w) / 2
+                y = (1024 - h) / 2
+            end
+            
+            layout(x, y, w, h)
+            
+        end, function() obj.loaded_ = true end)
+        
+        
+    end
+    
+    return setmetatable(obj, mt)
+end
+
+function mt:loaded()
+    return self.loaded_
+end
+
+function mt:get()
+    return textures[self.texture]
+end
+
+return setmetatable({}, mt)
