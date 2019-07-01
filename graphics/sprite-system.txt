@@ -1,0 +1,113 @@
+local mt, depth = {}, {}
+mt.__index = mt
+
+mt.__call = function(self, x, y, w, h)
+    local obj = {}
+    
+    obj.x, obj.y = x, y
+    obj.w, obj.h = w, h
+    obj.rot = 0
+    obj.texture_ = nil
+    obj.depth_ = #depth + 1
+    obj.color_ = Color(255, 255, 255)
+    obj.visible_ = true
+    obj.uv_ = {0, 0, 1, 1}
+    
+    setmetatable(obj, mt)
+    
+    depth[obj.depth_] = obj
+    return obj
+end
+
+function mt:pos(x, y)
+    local x, y = x or self.x, y or self.y
+    self.x, self.y = x, y
+    return x, y
+end
+
+function mt:rotate(rot)
+    local rot = rot or self.rot
+    self.rot = rot
+    return rot
+end
+
+function mt:depth(depth_)
+    local depth_ = depth_ or self.depth_
+    
+    if depth_ != self.depth then
+        table.remove(depth, self.depth_)
+        table.insert(depth, depth_, self)
+        self.depth_ = depth_
+    end
+    
+    return depth_
+end
+
+function mt:texture(texture)
+    local texture = texture or self.texture
+    self.texture_ = texture
+    return texture
+end
+
+function mt:visible(bool)
+    self.visible_ = bool
+    return self.visible_
+end
+
+function mt:color(color)
+    local color = color or self.color_
+    self.color_ = color
+    return color
+end
+
+function mt:uv(u0, v0, u1, v1)
+    local u0, v0, u1, v1 = u0 or self.uv_[1], v0 or self.uv_[2], u1 or self.uv_[3], v1 or self.uv_[4]
+    self.uv_ = {u0, v0, u1, v1}
+    return u0, v0, u1, v1
+end
+
+return setmetatable({draw = function()
+    for k, v in pairs(depth) do
+        
+        if v.visible_ then
+        
+            local rotate = Matrix()
+            rotate:rotate(Angle(0, v.rot, 0))
+            
+            local pos = Matrix()
+            pos:translate(Vector(v.x, v.y, 0))
+            
+            rotate = pos * rotate
+            
+            render.pushMatrix(rotate)
+            
+            render.setColor(v.color_)
+            render.setTexture(v.texture_)
+            render.drawTexturedRectUV(-v.w / 2, -v.h / 2, v.w, v.h, v.uv_[1], v.uv_[2], v.uv_[3], v.uv_[4])
+            
+            render.popMatrix()
+            
+        end
+        
+    end
+end}, mt)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
