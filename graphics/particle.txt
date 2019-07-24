@@ -39,8 +39,8 @@ mt.__call = function(self, texture_, x, y, w, h, dieTime, vel_x, vel_y, u0, v0, 
     obj["startRollDelta"] = 1
     obj["endRollDelta"] = 1
     
-    obj["startColor"] = Color(255, 101, 0)
-    obj["endColor"] = Color(10, 10, 10)
+    obj["startColor"] = Color(255, 255, 255)
+    obj["endColor"] = Color(255, 255, 255)
     
     obj["live"] = true
     
@@ -255,11 +255,8 @@ function Particle.draw() -- drawing particles and updating
     for k, v in pairs(depth) do
         local obj = v
         
-        obj.time = math.clamp(obj.time - dt_, 0, obj.dieTime)
-        obj.live = not (obj.time == 0)
-        local t = obj.time / obj.dieTime
-        
         if obj.live then
+            local t = obj.time / obj.dieTime
             obj.pos = {obj.vel[1] * dt_ + obj.pos[1], obj.vel[2] * dt_ + obj.pos[2]}
             obj.vel = {obj.vel[1] + obj.gravity[1], obj.vel[2] + obj.gravity[2]}
             obj.vel = {obj.vel[1] / (obj.airResistance + 1), obj.vel[2] / (obj.airResistance + 1)}
@@ -278,12 +275,16 @@ function Particle.draw() -- drawing particles and updating
             
             render.pushMatrix(pos * rotate)
             
+                render.setTexture(obj.texture:get())
                 render.setColor(color:setA(alpha))
-                render.drawRect(-obj.size[1] * obj.center[1], -obj.size[2] * obj.center[2], obj.size[1], obj.size[2])
+                render.drawTexturedRect(-obj.size[1] * obj.center[1], -obj.size[2] * obj.center[2], obj.size[1], obj.size[2])
             
             render.popMatrix()
             
         end
+        
+        obj.time = math.clamp(obj.time - dt_, 0, obj.dieTime)
+        obj.live = not (obj.time == 0)
         
     end
     
