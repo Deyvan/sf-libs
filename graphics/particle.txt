@@ -1,0 +1,299 @@
+--@client
+--@include lib/texture.txt
+local texture = require("lib/texture.txt")
+local Particle, mt, depth, dt = {}, {}, {}, 0
+mt.__index = mt
+setmetatable(Particle, mt)
+
+local function lerp(t, p0, p1)
+    return (1 - t) * p0 + t * p1 
+end
+
+mt.__call = function(self, texture_, x, y, w, h, dieTime, vel_x, vel_y, u0, v0, u1, v1)
+    
+    local obj = {}
+    
+    obj["pos"] = {x, y}
+    obj["vel"] = {vel_x or 0, vel_y or 0}
+    obj["size"] = {w, h}
+    obj["uv"] = {u0 or 0, v0 or 0, u1 or 1, v1 or 1}
+    obj["texture"] = texture(texture_)
+    obj["depth"] = #depth + 1
+    obj["alpha"] = 255
+    
+    obj["roll"] = 0
+    obj["deltaRoll"] = 0
+    
+    obj["dieTime"] = dieTime or 5 --seconds
+    obj["time"] = obj.dieTime
+    
+    obj["gravity"] = {0, 0}
+    obj["airResistance"] = 0
+    
+    obj["startAlpha"] = 1
+    obj["endAlpha"] = 0
+    
+    obj["startSize"] = 1
+    obj["endSize"] = 0
+    
+    obj["startRollDelta"] = 1
+    obj["endRollDelta"] = 1
+    
+    obj["startColor"] = Color(255, 101, 0)
+    obj["endColor"] = Color(10, 10, 10)
+    
+    obj["live"] = true
+    
+    obj["center"] = {0.5, 0.5} --same as uv
+    
+    table.insert(depth, obj)
+    return setmetatable(obj, mt)
+end
+
+-------------------------------- pos
+function mt:setPos(x, y)
+    local pos = {x or self.pos[1], y or self.pos[2]}
+    self.pos = pos
+end
+
+function mt:getPos()    
+    return unpack(self.pos)
+end
+
+-------------------------------- texture
+function mt:setTexture(texture_)
+    self.texture = texture(texture_)
+end
+
+function mt:getTexture()    
+    return self.texture:get()
+end
+
+-------------------------------- vel
+function mt:setVel(x, y)
+    local vel = {x or self.vel[1], y or self.vel[2]}
+    self.vel = vel
+end
+
+function mt:getVel()    
+    return unpack(self.vel)
+end
+
+-------------------------------- roll and deltaRoll (in radians)
+function mt:setRoll(r)
+    self.roll = r or self.roll
+end
+
+function mt:getRoll()    
+    return self.roll
+end
+
+function mt:setDeltaRoll(r)
+    self.deltaRoll = r or self.deltaRoll
+end
+
+function mt:getDeltaRoll()    
+    return self.deltaRoll
+end
+
+-------------------------------- startDeltaRoll and endDeltaRoll
+function mt:setStartDeltaRoll(r)
+    self.startRollDelta = r or self.startRollDelta
+end
+
+function mt:getStartDeltaRoll()
+    return self.startRollDelta
+end
+
+function mt:setEndDeltaRoll(r)
+    self.endRollDelta = r or self.endRollDelta
+end
+
+function mt:getEndDeltaRoll()
+    return self.endRollDelta
+end
+
+-------------------------------- alpha
+function mt:setAlpha(a)
+    self.alpha = a or self.alpha
+end
+
+function mt:getAlpha()
+    return self.alpha
+end
+
+-------------------------------- dieTime
+function mt:setDieTime(t)
+    self.dieTime = t or self.dieTime
+end
+
+function mt:getDieTime()
+    return self.dieTime
+end
+
+-------------------------------- time
+function mt:setTime(t)
+    self.time = t or self.time
+end
+
+function mt:getTime()
+    return self.time
+end
+
+-------------------------------- gravity
+function mt:setGravity(x, y)
+    local gravity = {x or self.gravity[1], y or self.gravity[2]}
+    self.gravity = gravity
+end
+
+function mt:getGravity()    
+    return unpack(self.gravity)
+end
+
+-------------------------------- airResistance
+function mt:setAirResistance(airResistance)
+    self.airResistance = airResistance or self.airResistance
+end
+
+function mt:getAirResistance()
+    return self.airResistance
+end
+
+-------------------------------- startAlpha and endAlpha
+function mt:setStartAlpha(a)
+    self.startAlpha = a or self.startAlpha
+end
+
+function mt:setEndAlpha(a)
+    self.endAlpha = a or self.endAlpha
+end
+
+function mt:getStartAlpha()
+    return self.startAlpha
+end
+
+function mt:getEndAlpha()
+    return self.endAlpha
+end
+
+-------------------------------- startSize and endSize
+function mt:setStartSize(s)
+    self.startSize = s or self.startSize
+end
+
+function mt:setEndSize(s)
+    self.endSize = s or self.endSize
+end
+
+function mt:getStartSize()
+    return self.startSize
+end
+
+function mt:getEndSize()
+    return self.endSize
+end
+
+-------------------------------- startColor and endColor
+function mt:setStartColor(c)
+    self.startColor = c or self.startColor
+end
+
+function mt:setEndColor(c)
+    self.endColor = c or self.endColor
+end
+
+function mt:getStartColor()
+    return self.startColor
+end
+
+function mt:getEndColor()
+    return self.endColor
+end
+
+-------------------------------- center
+function mt:setCenter(x, y)
+    local center = {x or self.center[1], y or self.center[2]}
+    self.center = center
+end
+
+function mt:getCenter()    
+    return unpack(self.center)
+end
+
+-------------------------------- depth
+function mt:setDepth(depth_)
+    table.remove(depth, self.depth)
+    table.insert(depth, depth_, self)
+    self.depth = depth_
+    
+    for i = depth_ + 1, #depth do
+        depth[i].depth = i + 1
+    end
+end
+
+function mt:getDepth()    
+    return self.depth
+end
+
+-------------------------------- remove
+function mt:remove()    
+    table.remove(depth, self.depth)
+    for i = self.depth, #depth do
+        depth[i].depth = i - 1
+    end
+end
+
+------------------------------------------------------------------------------------------------
+
+
+function Particle.draw() -- drawing particles and updating
+    
+    if dt == 0 then dt = timer.curtime() end
+    local dt_ = timer.curtime() - dt
+    dt = timer.curtime()
+    
+    for k, v in pairs(depth) do
+        local obj = v
+        
+        obj.time = math.clamp(obj.time - dt_, 0, obj.dieTime)
+        obj.live = not (obj.time == 0)
+        local t = obj.time / obj.dieTime
+        
+        if obj.live then
+            obj.pos = {obj.vel[1] * dt_ + obj.pos[1], obj.vel[2] * dt_ + obj.pos[2]}
+            obj.vel = {obj.vel[1] + obj.gravity[1], obj.vel[2] + obj.gravity[2]}
+            obj.vel = {obj.vel[1] / (obj.airResistance + 1), obj.vel[2] / (obj.airResistance + 1)}
+        
+            local t = 1 - t
+            local size = {obj.size[1] * lerp(t, obj.startSize, obj.endSize), obj.size[2] * lerp(t, obj.startSize, obj.endSize)}
+            local color = lerp(t, obj.startColor, obj.endColor)
+            local alpha = obj.alpha * lerp(t, obj.startAlpha, obj.endAlpha)
+            obj.roll = obj.roll + obj.deltaRoll * dt_ * lerp(t, obj.startRollDelta, obj.endRollDelta)
+            
+            local rotate = Matrix()
+            rotate:rotate(Angle(0, obj.roll, 0))
+            
+            local pos = Matrix()
+            pos:translate(Vector(obj.pos[1], obj.pos[2]))
+            
+            render.pushMatrix(pos * rotate)
+            
+                render.setColor(color:setA(alpha))
+                render.drawRect(-obj.size[1] * obj.center[1], -obj.size[2] * obj.center[2], obj.size[1], obj.size[2])
+            
+            render.popMatrix()
+            
+        end
+        
+    end
+    
+end
+
+
+return Particle
+
+
+
+
+
+
