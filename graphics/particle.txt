@@ -254,9 +254,13 @@ function Particle.draw() -- drawing particles and updating
     
     for k, v in pairs(depth) do
         local obj = v
-        
+          
         if obj.live then
+            obj.time = math.clamp(obj.time - dt_, 0, obj.dieTime)
+            obj.live = not (obj.time == 0)
+            
             local t = obj.time / obj.dieTime
+            
             obj.pos = {obj.vel[1] * dt_ + obj.pos[1], obj.vel[2] * dt_ + obj.pos[2]}
             obj.vel = {obj.vel[1] + obj.gravity[1], obj.vel[2] + obj.gravity[2]}
             obj.vel = {obj.vel[1] / (obj.airResistance + 1), obj.vel[2] / (obj.airResistance + 1)}
@@ -267,24 +271,19 @@ function Particle.draw() -- drawing particles and updating
             local alpha = obj.alpha * lerp(t, obj.startAlpha, obj.endAlpha)
             obj.roll = obj.roll + obj.deltaRoll * dt_ * lerp(t, obj.startRollDelta, obj.endRollDelta)
             
-            local rotate = Matrix()
-            rotate:rotate(Angle(0, obj.roll, 0))
+            local matrix = Matrix()
+            matrix:translate(Vector(obj.pos[1], obj.pos[2]))
+            matrix:rotate(Angle(0, obj.roll, 0))
             
-            local pos = Matrix()
-            pos:translate(Vector(obj.pos[1], obj.pos[2]))
-            
-            render.pushMatrix(pos * rotate)
+            render.pushMatrix(matrix)
             
                 render.setTexture(obj.texture:get())
                 render.setColor(color:setA(alpha))
-                render.drawTexturedRect(-obj.size[1] * obj.center[1], -obj.size[2] * obj.center[2], obj.size[1], obj.size[2])
+                render.drawTexturedRect(-size[1] * obj.center[1], -size[2] * obj.center[2], size[1], size[2])
             
             render.popMatrix()
             
         end
-        
-        obj.time = math.clamp(obj.time - dt_, 0, obj.dieTime)
-        obj.live = not (obj.time == 0)
         
     end
     
