@@ -24,7 +24,7 @@ mt.__call = function(self, texture_, x, y, w, h, dieTime, vel_x, vel_y, u0, v0, 
     obj["roll"] = 0
     obj["deltaRoll"] = 0
     
-    obj["dieTime"] = dieTime or 5 --seconds
+    obj["lifetime"] = dieTime or 5 --seconds
     obj["time"] = obj.dieTime
     
     obj["gravity"] = {0, 0}
@@ -122,12 +122,12 @@ function mt:getAlpha()
     return self.alpha
 end
 
--------------------------------- dieTime
-function mt:setDieTime(t)
-    self.dieTime = t or self.dieTime
+-------------------------------- lifetime
+function mt:setLifetime(t)
+    self.lifetime = t or self.lifetime
 end
 
-function mt:getDieTime()
+function mt:getLifetime()
     return self.dieTime
 end
 
@@ -259,13 +259,12 @@ function Particle.draw() -- drawing particles and updating
             obj.time = math.clamp(obj.time - dt_, 0, obj.dieTime)
             obj.live = not (obj.time == 0)
             
-            local t = obj.time / obj.dieTime
-            
             obj.pos = {obj.vel[1] * dt_ + obj.pos[1], obj.vel[2] * dt_ + obj.pos[2]}
             obj.vel = {obj.vel[1] + obj.gravity[1], obj.vel[2] + obj.gravity[2]}
             obj.vel = {obj.vel[1] / (obj.airResistance + 1), obj.vel[2] / (obj.airResistance + 1)}
         
-            local t = 1 - t
+            local t = 1 - obj.time / obj.lifetime
+            
             local size = {obj.size[1] * lerp(t, obj.startSize, obj.endSize), obj.size[2] * lerp(t, obj.startSize, obj.endSize)}
             local color = lerp(t, obj.startColor, obj.endColor)
             local alpha = obj.alpha * lerp(t, obj.startAlpha, obj.endAlpha)
