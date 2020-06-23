@@ -128,7 +128,7 @@ function mt:setLifetime(t)
 end
 
 function mt:getLifetime()
-    return self.dieTime
+    return self.lifetime
 end
 
 -------------------------------- time
