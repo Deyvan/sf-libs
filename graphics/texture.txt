@@ -1,3 +1,4 @@
+--@client
 local textures = {}
 local mt = {}
 mt.__index = mt
@@ -5,7 +6,7 @@ mt.__index = mt
 mt.__call = function(self, url, scaled, centered)
     
     local url = url or ""
-    local name = url .. (scaled and "scaled" or "") .. (centered and "centered" or "")
+    local name = url .. (scaled and "-scaled" or "") .. (centered and "-centered" or "")
     local obj = {}
     local texture
     
@@ -14,7 +15,7 @@ mt.__call = function(self, url, scaled, centered)
     
     if url != "" and not textures[name] then
         
-        textures[name] = render.getTextureID(url, function(_, _, w, h, layout)
+        textures[name] = render.createMaterial(url, function(_, _, w, h, layout)
             
             local max, scale
             local x, y = 0, 0
